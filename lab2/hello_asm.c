@@ -18,7 +18,7 @@ long my_syscall(long sysno, long arg1, long arg2, long arg3,
   "S" (arg1),  // rsi = 1-й аргумент
   "d" (arg2),  // rdx = 2-й аргумент
   "c" (arg3),  // rcx = 3-й аргумент
-  "r" (arg4),  // arg5 и arg6 передаются через r8, r9
+  "r" (arg4),  // arg5 и arg6 передаются через r8, stack
   "r" (arg5),
   "r" (arg6)
   );
