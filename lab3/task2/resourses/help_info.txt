@@ -1,0 +1,29 @@
+────────────────────────────────────────────────────────────
+File System Utility - Help
+-------------------------------------------------------------------------------
+- Usage:
+./build.sh
+./fs_utils/[util_name] [PATH_TO_FILE_OR_DIR] [ACTION]
+
+- Description:
+A command-line utility for performing various file system operations.
+This program takes an action (specified via a link name) and performs
+the corresponding operation on the specified file or directory.
+
+- Actions:
+create_dir                Create directory specified by PATH.
+show_dir                  Display contents of directory specified by PATH.
+rm_dir                    Delete directory specified by PATH.
+create_file               Create file specified by PATH.
+show_file                 Display contents of file specified by PATH.
+rm_file                   Delete file specified by PATH.
+create_sym_link           Create symbolic link to file specified by PATH.
+show_sym_link             Display the content of the symbolic link (its target) specified by PATH.
+show_file_by_symlink      Display contents of the file pointed to by the symbolic link.
+rm_sym_link               Delete symbolic link specified by PATH.
+create_hard_link          Create hard link to file specified by PATH.
+rm_hard_link              Delete hard link specified by PATH.
+show_file_permissions     Display access permissions and number of hard links for file specified by PATH.
+change_file_permissons    Change access permissions of file specified by PATH.
+-------------------------------------------------------------------------------
+────────────────────────────────────────────────────────────
