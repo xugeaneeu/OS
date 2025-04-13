@@ -59,11 +59,11 @@ static int create_mirror_file(char* src_path, char* dest_path) {
     return EXIT_FAILURE;
   }
   reverse_copy_file_content(fin, fout);
-  if (fclose(fout) != 0) {
+  if (fclose(fin) != 0) {
     fprintf(stderr, "Can't close src file %s\n", src_path);
     return EXIT_FAILURE;
   }
-  if (fclose(fin) != 0) {
+  if (fclose(fout) != 0) {
     fprintf(stderr, "Can't close dest file %s\n", dest_path);
     return EXIT_FAILURE;
   }
@@ -96,13 +96,6 @@ int make_mirror_files(const char* src, const char* dest) {
     fprintf(stderr, "Can't open the selected directory for copy.\n");
     return EXIT_FAILURE;
   }
-  
-  char* file_src = calloc(strlen(src) + 1, sizeof(char));
-  char* file_dest = calloc(strlen(dest) + 1, sizeof(char));
-  strcpy(file_src, src);
-  strcpy(file_dest, dest);
-  strcat(file_src, "/\0");
-  strcat(file_dest, "/\0");
 
   struct stat dirent_stat;
   struct dirent* dirent_ptr;
@@ -123,8 +116,6 @@ int make_mirror_files(const char* src, const char* dest) {
       }
       if (create_mirror_file(src_file_path, dest_file_path)) {
         fprintf(stderr, "Reversed file %s didn't created", reversed_name);
-        free(file_src);
-        free(file_dest);
         free(src_file_path);
         free(dest_file_path);
         return EXIT_FAILURE;
@@ -139,8 +130,6 @@ int make_mirror_files(const char* src, const char* dest) {
     fprintf(stderr, "Can't close correctly the selected directory.\n");
     return EXIT_FAILURE;
   }
-  free(file_src);
-  free(file_dest);
 
   return EXIT_SUCCESS;
 }
