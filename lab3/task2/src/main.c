@@ -14,7 +14,7 @@ int process_args(int argc, char** argv) {
     return EXIT_SUCCESS;
   }
 
-  char util_name[FUNC_NAME_SIZE];
+  char util_name[FUNC_NAME_SIZE] = {};
   get_util_name(util_name, argv[0]);
 
   if (!strcmp(util_name, "create_dir")) {
@@ -55,8 +55,6 @@ int process_args(int argc, char** argv) {
     printf("Wrong args, chech help");
     return EXIT_FAILURE;
   }
-  
-  printf("%s %s %s\n", util_name, argv[1], argv[2]);
 
   if (!strcmp(util_name, "create_sym_link")) {
     return create_sym_link(argv[1], argv[2]);

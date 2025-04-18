@@ -109,7 +109,7 @@ int create_sym_link(const char* path_to_file, const char* link_name) {
 
 int show_sym_link(const char* path_to_link) {
   char buffer[BUFFER_SIZE];
-  if (readlink(path_to_link, buffer, BUFFER_SIZE)) {
+  if (!readlink(path_to_link, buffer, BUFFER_SIZE)) {
     printf("Can't read the link\n");
     return EXIT_FAILURE;
   }

@@ -25,5 +25,4 @@ void get_util_name(char *buffer, char *file_name) {
   for (int i = start_idx; i < file_name_size; ++i) {
     buffer[i - start_idx] = file_name[i];
   }
-  strcat(buffer, "\0");
 }
