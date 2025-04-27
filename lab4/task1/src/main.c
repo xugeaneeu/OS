@@ -50,20 +50,20 @@ void print_addr(void) {
 int main(void) {
   printf("PID: %d\n", getpid());
 
-  #ifdef a
+  #ifdef A
   print_addr();
   sleep(720);
   #endif
 
-  #ifdef d
+  #ifdef D
   printf("%p", get_local());
   #endif
 
-  #ifdef e
+  #ifdef E
   cool_name_function();
   #endif
 
-  #ifdef g
+  #ifdef G
   char* env_val = getenv("MY_ENV_VAR");
   if(env_val != NULL) {
     printf("Init value of MY_ENV_VAR: %s\n", env_val);
