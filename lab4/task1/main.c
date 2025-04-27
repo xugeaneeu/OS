@@ -14,9 +14,9 @@ void cool_name_function(void) {
     return;
   }
   strcpy(a, "hello wrld");
-  printf("%p %s\n", a, a);
+  printf("%s\n", a);
   free(a);
-  printf("%p %s\n", a, a);
+  printf("%s\n", a);
 
   char* b = malloc(100);
   if (NULL == b) {
@@ -24,14 +24,25 @@ void cool_name_function(void) {
     return;
   }
   strcpy(b, "hello wrld");
-  printf("%p %s\n", b, b);
+  printf("%s\n", b);
+  free(b + 50);
+  printf("%s\n", b);
+  free(b);
 }
 
-void some_function(void) {
+int* get_local(void) {
+  int local = 10;
+  return &local;
+}
+
+void print_addr(void) {
   int local_unitialized;
   int local_initialized = 20;
   const int local_constant = 40;
 
+  printf("Adresses:\n");
+  printf("Global_unitialized: %p\nGlobal_initialized: %p\nGlobal_constant: %p\n",
+        &global_unitialized, &global_initialized, &global_constant);
   printf("Local_unitialized: %p\nLocal_initialized: %p\nLocal_constant: %p\n",
         &local_unitialized, &local_initialized, &local_constant);
 }
@@ -39,16 +50,28 @@ void some_function(void) {
 int main(void) {
   printf("PID: %d\n", getpid());
 
-  printf("Adresses:\n");
-  printf("Global_unitialized: %p\nGlobal_initialized: %p\nGlobal_constant: %p\n",
-    &global_unitialized, &global_initialized, &global_constant);
+  #ifdef a
+  print_addr();
+  sleep(720);
+  #endif
 
-  some_function();
+  #ifdef d
+  printf("%p", get_local());
+  #endif
 
+  #ifdef e
   cool_name_function();
+  #endif
 
-  //TODO: env and do sth with task1
+  #ifdef g
+  char* env_val = getenv("MY_ENV_VAR");
+  if(env_val != NULL) {
+    printf("Init value of MY_ENV_VAR: %s\n", env_val);
+  }
+  else {
+    printf("MY_ENV_VAR is not set\n");
+  }
+  #endif
 
-  sleep(120);
   return EXIT_SUCCESS;
 }
