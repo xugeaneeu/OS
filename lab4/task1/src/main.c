@@ -71,6 +71,9 @@ int main(void) {
   else {
     printf("MY_ENV_VAR is not set\n");
   }
+
+  setenv("MY_ENV_VAR", "124", 1);
+  printf("new value %s\n", getenv("MY_ENV_VAR"));
   #endif
 
   return EXIT_SUCCESS;

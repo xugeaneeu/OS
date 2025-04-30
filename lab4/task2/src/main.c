@@ -47,7 +47,10 @@ void mmap_allocation(void) {
     return;
   }
 
-  *(char*)addr = 3;
+  //*(char*)addr = 3;
+
+  munmap((void*)((char*)addr + 4*getpagesize()), 3*getpagesize());
+  sleep(5);
 
   return;
 }
