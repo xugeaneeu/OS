@@ -11,16 +11,14 @@
 
 #include "mini_strace_syscalls.h"
 
-void print_syscall_enter(size_t syscall_num)
-{
+void print_syscall_enter(size_t syscall_num) {
     if (syscall_num < sizeof(syscall_to_name) / sizeof(syscall_to_name[0]))
         fprintf(stderr, "%s", syscall_to_name[syscall_num]);
     else
         fprintf(stderr, "unknown");
 }
 
-void print_syscall_exit(size_t return_value)
-{
+void print_syscall_exit(size_t return_value) {
     fprintf(stderr, " -> %zu\n", return_value);
 }
 
