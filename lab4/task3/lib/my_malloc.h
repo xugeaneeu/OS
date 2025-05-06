@@ -3,9 +3,8 @@
 
 #include <stddef.h>
 
-int init_heap(void);
-void destroy_heap(void);
 void* my_malloc(size_t size);
 void my_free(void* ptr);
+void destroy_heap(void);
 
 #endif

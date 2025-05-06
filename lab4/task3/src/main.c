@@ -5,12 +5,7 @@
 #include <string.h>
 
 int main(void) {
-  int ret = init_heap();
-  if(ret == -1) {
-      return EXIT_FAILURE;
-  }
-
-  char* ptr1 = (char*)my_malloc(strlen("hellllo wrld") * sizeof(char));
+  char* ptr1 = my_malloc(strlen("hellllo wrld") * sizeof(char));
   if(ptr1 == NULL) {
       printf("my_malloc error\n");
       return EXIT_FAILURE;
@@ -23,7 +18,7 @@ int main(void) {
 
   my_free(ptr1);
   printf("Freed ptr1\n");
+
   
-  destroy_heap();
   return EXIT_SUCCESS;
 }
