@@ -56,6 +56,7 @@ static void heap_init(void) {
   f->size = h->size;
   f->is_free = 1;
   free_list = h;
+  printf("Inited amount: %d\n", HEAP_SIZE);
 }
 
 static void remove_block(smb* ptr) {
@@ -114,7 +115,7 @@ static smb* merge(smb* ptr) {
 
 //place for interface
 
-void* malloc(size_t size) {
+void* my_malloc(size_t size) {
   if (size == 0) return NULL;
   if (!heap) heap_init();
 
@@ -157,7 +158,7 @@ void* malloc(size_t size) {
   return (void*)((char*)cur_block + sizeof(smb));
 }
 
-void free(void* ptr) {
+void my_free(void* ptr) {
   if (!ptr) {
     return;
   }
