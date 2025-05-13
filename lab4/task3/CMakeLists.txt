@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
 set(CMAKE_C_COMPILER clang)
-project(lab3/task3 C)
+project(lab4/task3 C)
 
 add_library(my_malloc
             lib/my_malloc.c
