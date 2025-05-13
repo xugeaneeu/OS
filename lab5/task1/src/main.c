@@ -29,15 +29,20 @@ int main(void) {
     global_var++;
     printf("Modified  Local var addr: %p and value: %d\n", &local_var, local_var);
     printf("Modified Global var addr: %p and value: %d\n", &global_var, global_var);
-    sleep(20);
-    exit(5);
+    sleep(31);
   } else {
-    sleep(5);
+    sleep(1);
     printf("parent proc\n");
     printf("Local  var addr: %p and value: %d\n", &local_var, local_var);
     printf("Global var addr: %p and value: %d\n", &global_var, global_var);
 
     sleep(30);
+
+  }
+
+  if (child_pid == 0) {
+    exit(5);
+  } else {
     int status;
     int terminated_pid = wait(&status);
     if (terminated_pid == -1) {
@@ -59,3 +64,5 @@ int main(void) {
 
   return 0;
 }
+
+// watch -n1 -d ps -o pid,ppid,state,cmd -eH
