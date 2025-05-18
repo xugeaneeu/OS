@@ -26,12 +26,13 @@ int main(void) {
 
   if (bind(sd, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
     printf("Error when binding name to socket\n");
+    close(sd);
     return EXIT_FAILURE;
   }
 
   char buffer[BUFFER_SIZE];
   ssize_t len_receive;
-  while (1) {
+  for (;;) {
     client_len = sizeof(ca);
     len_receive = recvfrom(sd, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&ca, &client_len);
     if (len_receive == -1) {
