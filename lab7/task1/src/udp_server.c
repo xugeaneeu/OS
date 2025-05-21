@@ -22,7 +22,7 @@ int main(void) {
   memset(&sa, 0, sizeof(sa));
   sa.sin_family = AF_INET;
   sa.sin_addr.s_addr = htonl(INADDR_ANY);
-  sa.sin_port =  htons(SERV_PORT);
+  sa.sin_port = htons(SERV_PORT);
 
   if (bind(sd, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
     printf("Error when binding name to socket\n");

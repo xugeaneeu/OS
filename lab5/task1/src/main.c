@@ -37,7 +37,6 @@ int main(void) {
     printf("Global var addr: %p and value: %d\n", &global_var, global_var);
 
     sleep(30);
-
   }
 
   if (child_pid == 0) {
