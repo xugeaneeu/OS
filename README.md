@@ -1,7 +1,8 @@
 # OS
 Here are my lab works on operating systems
 
-Themes:
+
+1st_semester themes:
 1. Компиляция, сборка, запуск.
 2. Системные вызовы.
 3. Файлы и файловые системы.
@@ -10,3 +11,6 @@ Themes:
 6. Межпроцессорное взаимодействие.
 7. Сеть (UDP, TCP серверы).
 8. Поняте пользователя. Управление правами.
+
+2nd_semester thems:
+
