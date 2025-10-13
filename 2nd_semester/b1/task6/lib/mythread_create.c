@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define STACK_SIZE (2<<20)
+#define STACK_SIZE (1<<20)
 
 int threadFunc(void* args) {
 	void* (*start_routine)(void*) = ((void**)(args))[0];
@@ -15,7 +15,7 @@ int threadFunc(void* args) {
 	start_routine(routineArg);
 
 	free((void**)args);
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 int mythread_create(mythread_t *thread, void *(*start_routine)(void *), void *arg) {
