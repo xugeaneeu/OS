@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 void* mythread(void *arg) {
-  char* x = "Hello world";
+  const char* x = "Hello world";
 	return x;
 }
 

@@ -4,15 +4,22 @@
 #include <string.h>
 #include <unistd.h>
 
+void cleanup_handler(void * args) {
+  void * space = *(void **)args;
+  free(space);
+}
+
 void *my_thread(void *arg) {
-  char* hellwrld = malloc(sizeof("hello world"));
+  char* hellwrld;
+
+  pthread_cleanup_push(cleanup_handler, &hellwrld);
+
+  hellwrld = malloc(sizeof("hello world"));
   if (!hellwrld) {
     printf("panic malloc isn't working");
     return NULL;
   }
   strcpy(hellwrld, "hello world");
-
-  pthread_cleanup_push(free, hellwrld);
 
   for(;;) {
     printf("%s\n", hellwrld);
