@@ -148,7 +148,6 @@ static void ensure_reaper_created(void) {
                         atomic_store(&reaper_created, 1);
                     }
                 }
-                
             }
         }
     }
@@ -295,7 +294,7 @@ int mythread_join(mythread_t thread, void **retval) {
         errno = EINVAL;
         return -1;
     }
-    unsigned long self = gettid_ul();
+    unsigned long self = mythread_self();
     if (self == thread) {
         errno = EDEADLK;
         return -1;
@@ -363,7 +362,7 @@ int mythread_cancel(mythread_t thread) {
     }
     atomic_store(&ti->cancel_req, 1);
     
-    if (gettid_ul() == thread) {
+    if (mythread_self() == thread) {
         mythread_testcancel();
     }
     return 0;
@@ -371,7 +370,7 @@ int mythread_cancel(mythread_t thread) {
 
 /* mythread_testcancel: if cancellation requested for current thread, run cleanup and exit with PTHREAD_CANCELED */
 void mythread_testcancel(void) {
-    unsigned long tid = gettid_ul();
+    unsigned long tid = mythread_self();
     thread_info *ti = find_threadinfo_by_tid(tid);
     if (!ti) return;
     if (atomic_load(&ti->cancel_req)) {
