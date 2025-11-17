@@ -4,5 +4,6 @@ set(CMAKE_C_COMPILER clang)
 project(b1/task6 C)
 
 add_executable(main src/main.c
-                    lib/uthread_create.c
+                    lib/uthreads.c
+                    lib/uthread_wrappers.c
 )
