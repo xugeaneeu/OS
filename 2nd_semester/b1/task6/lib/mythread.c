@@ -269,7 +269,7 @@ void mythread_exit(void *retval) {
     ti->retval = retval;
     atomic_store(&ti->finished, 1);
     atomic_store(&ti->futex, 1);
-    futex_wake(&ti->futex, 1);
+    futex_wake((int *)(&ti->futex), 1);
 
     if (atomic_load(&ti->detached)) {
         notify_reaper(ti->tid);
@@ -313,7 +313,7 @@ int mythread_join(mythread_t thread, void **retval) {
         int v = atomic_load(&ti->futex);
         if (v == 0) {
             /* wait */
-            futex_wait(&ti->futex, 0);
+            futex_wait((int *)(&ti->futex), 0);
         } else {
             break;
         }
@@ -379,7 +379,7 @@ void mythread_testcancel(void) {
         ti->retval = (void*)PTHREAD_CANCELED;
         atomic_store(&ti->finished, 1);
         atomic_store(&ti->futex, 1);
-        futex_wake(&ti->futex, INT_MAX);
+        futex_wake((int *)(&ti->futex), INT_MAX);
         if (atomic_load(&ti->detached)) {
             notify_reaper(ti->tid);
         }
