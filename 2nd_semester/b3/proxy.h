@@ -1,15 +1,28 @@
 #pragma once
 
 #include "cache.h"
+#include "config.h"
 
+#include <stdatomic.h>
 #include <stdint.h>
 
 
 /*------------types-------------*/
 
+typedef struct Connection {
+
+} Connection;
+
+
 typedef struct ProxyServer {
   LRU_Cache_t *cache;
   int listener;
+
+  //Потоки постоянно проверяют флаг на завершение конекшена,
+  //когда хэндлер ловит сигнал, он выставляет все флаги в 0/1
+  //потоки внутри завершают текущие запросы, после завершаются
+  atomic_int conn_cnt;
+  Connection connections[MAX_CONNECTIONS];
 } ProxyServer;
 
 typedef struct ProxyConfig {
