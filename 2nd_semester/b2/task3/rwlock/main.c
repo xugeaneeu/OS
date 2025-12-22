@@ -128,11 +128,11 @@ void *swap_thread(void *data) {
     // до конца списка делаю 50% свап узлов 
     curr3 = curr2->next;
     while (curr3 != NULL) {
-      pthread_rwlock_wrlock(&curr3->sync);
-
       if ((rand() % 2) == 0) {
         swap_nodes(&curr1->next, curr2, curr3);
       }
+
+      pthread_rwlock_wrlock(&curr3->sync);
       // ... -> *cur1->next -> curr3 -> curr2 -> ...
       curr3 = curr1->next;
       pthread_rwlock_unlock(&curr1->sync);
