@@ -9,23 +9,21 @@
 
 /*------------types-------------*/
 
-typedef struct Connection {
+struct ProxyServer;
 
+typedef struct Connection {
+  pthread_t           thread;
+  int                 client_fd;
+  atomic_int          busy;
+  struct ProxyServer* serv;
 } Connection;
 
 
 typedef struct ProxyServer {
   LRU_Cache_t* cache;
   int          listener;
-
-  // Для graceful shutdown
-  // Потоки постоянно проверяют флаг на завершение конекшена,
-  // когда хэндлер ловит сигнал, он выставляет флаг в 0/1
-  // потоки внутри завершают текущие запросы, после завершаются
-  // Возможно имеет смысл посмотреть в строну testcancel
-
-  atomic_int conn_cnt;
-  Connection connections[MAX_CONNECTIONS];
+  atomic_int   conn_cnt;
+  Connection   connections[MAX_CONNECTIONS];
 } ProxyServer;
 
 typedef struct ProxyConfig {
