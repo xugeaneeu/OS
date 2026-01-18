@@ -266,6 +266,8 @@ int CacheFinish(LRU_Cache_t* cache, cache_entry_t* entry) {
 
   atomic_fetch_add(&cache->size, entry->size);
   while (atomic_load(&cache->size) > cache->capacity) {
+    if (cache->tail == cache->head)
+      break;
     evict_tail(cache);
   }
   return 0;
