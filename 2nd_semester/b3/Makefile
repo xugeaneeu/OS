@@ -1,8 +1,4 @@
 CC      := clang
-
-# CFLAGS  := -std=c11 -Weverything -Wno-c++-compat -Wno-padded \
-#            -Wno-sign-conversion -Wno-unused-parameter \
-#            -pthread
 					 
 CFLAGS := -pthread
 BUILD_DIR := build
