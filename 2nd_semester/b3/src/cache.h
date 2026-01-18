@@ -12,6 +12,7 @@ typedef struct cache_entry_t {
 
   struct cache_entry_t* prev;
   struct cache_entry_t* next;
+  
   struct cache_entry_t* hnext;
 } cache_entry_t;
 

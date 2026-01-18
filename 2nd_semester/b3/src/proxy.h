@@ -18,9 +18,12 @@ typedef struct ProxyServer {
   LRU_Cache_t *cache;
   int listener;
 
+  //Для graceful shutdown
   //Потоки постоянно проверяют флаг на завершение конекшена,
-  //когда хэндлер ловит сигнал, он выставляет все флаги в 0/1
+  //когда хэндлер ловит сигнал, он выставляет флаг в 0/1
   //потоки внутри завершают текущие запросы, после завершаются
+  //Возможно имеет смысл посмотреть в строну testcancel
+
   atomic_int conn_cnt;
   Connection connections[MAX_CONNECTIONS];
 } ProxyServer;
