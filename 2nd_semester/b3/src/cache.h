@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pthread.h>
+#include <stdatomic.h>
 #include <stddef.h>
 
 
@@ -8,11 +9,16 @@
 typedef struct cache_entry_t {
   char*  key;
   char*  value;
-  size_t size;
+  size_t size;     // already downloaded to cache
+  size_t capacity; // complete size
+
+  atomic_int      complete; // 0 - downloading, 1 - complete
+  pthread_mutex_t lock;
+  pthread_cond_t  cond;
 
   struct cache_entry_t* prev;
   struct cache_entry_t* next;
-  
+
   struct cache_entry_t* hnext;
 } cache_entry_t;
 
@@ -24,8 +30,8 @@ typedef struct LRU_Cache_t {
   cache_entry_t* head;
   cache_entry_t* tail;
 
-  size_t buckets;
-  cache_entry_t **table;
+  size_t          buckets;
+  cache_entry_t** table;
 
   pthread_mutex_t lock;
 } LRU_Cache_t;
@@ -35,5 +41,4 @@ typedef struct LRU_Cache_t {
 
 int            Cache(LRU_Cache_t* cache, size_t capacity, size_t buckets);
 int            DestroyCache(LRU_Cache_t* cache);
-int            AddElem(LRU_Cache_t* cache, const char* key, const char* value, const size_t size);
-cache_entry_t* FindElem(LRU_Cache_t* cache, const char* key);
+cache_entry_t* CacheGetOrCreate();

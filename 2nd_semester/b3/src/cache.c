@@ -11,9 +11,9 @@
 /*
   Simple hash to str function.
 */
-static unsigned long hash_str(const char *str) {
+static unsigned long hash_str(const char* str) {
   unsigned long hash = 5381;
-  int c;
+  int           c;
   while ((c = (unsigned char)*str++))
     hash = ((hash << 5) + hash) + c;
   return hash;
@@ -24,7 +24,8 @@ static unsigned long hash_str(const char *str) {
   Delete node from cache double-linked list.
 */
 static void detach_node(LRU_Cache_t* cache, cache_entry_t* node) {
-  if (!node) return;
+  if (!node)
+    return;
 
   if (node->prev) {
     node->prev->next = node->next;
@@ -48,26 +49,31 @@ static void detach_node(LRU_Cache_t* cache, cache_entry_t* node) {
 static void insert_at_front(LRU_Cache_t* cache, cache_entry_t* node) {
   node->prev = NULL;
   node->next = cache->head;
-  if (cache->head) cache->head->prev = node;
+  if (cache->head)
+    cache->head->prev = node;
   cache->head = node;
-  if (!cache->tail) cache->tail = node;
+  if (!cache->tail)
+    cache->tail = node;
 }
 
 
 /*
   Pop node from tail.
 */
-static void evict_tail(LRU_Cache_t *cache) {
-  if (!cache->tail) return;
-  cache_entry_t *node = cache->tail;
+static void evict_tail(LRU_Cache_t* cache) {
+  if (!cache->tail)
+    return;
+  cache_entry_t* node = cache->tail;
 
-  unsigned long h = hash_str(node->key) % cache->buckets;
-  cache_entry_t *cur = cache->table[h];
-  cache_entry_t *prev = NULL;
+  unsigned long  h = hash_str(node->key) % cache->buckets;
+  cache_entry_t* cur = cache->table[h];
+  cache_entry_t* prev = NULL;
   while (cur) {
     if (cur == node) {
-      if (prev) prev->hnext = cur->hnext;
-      else cache->table[h] = cur->hnext;
+      if (prev)
+        prev->hnext = cur->hnext;
+      else
+        cache->table[h] = cur->hnext;
       break;
     }
     prev = cur;
@@ -76,8 +82,10 @@ static void evict_tail(LRU_Cache_t *cache) {
 
   detach_node(cache, node);
 
-  if (cache->size >= node->size) cache->size -= node->size;
-  else cache->size = 0;
+  if (cache->size >= node->size)
+    cache->size -= node->size;
+  else
+    cache->size = 0;
 
   free(node->key);
   free(node->value);
@@ -89,14 +97,14 @@ static void evict_tail(LRU_Cache_t *cache) {
 
 /*
   Initialize cache storage with according capasity.
-  Return 0 in success, 1 if cache is NULL / capasity is 0 / 
+  Return 0 in success, 1 if cache is NULL / capasity is 0 /
   memory allocation error occured.
 */
 int Cache(LRU_Cache_t* cache, size_t capacity, size_t buckets) {
   if (!cache || capacity == 0 || buckets == 0) {
     return EXIT_FAILURE;
   }
-  
+
   cache->capacity = capacity;
   cache->size = 0;
 
@@ -107,7 +115,7 @@ int Cache(LRU_Cache_t* cache, size_t capacity, size_t buckets) {
   if (!cache->table) {
     return EXIT_FAILURE;
   }
-  
+
   if (pthread_mutex_init(&cache->lock, NULL) != 0) {
     free(cache->table);
     return EXIT_FAILURE;
@@ -117,7 +125,7 @@ int Cache(LRU_Cache_t* cache, size_t capacity, size_t buckets) {
 
 
 /*
-  Destroying cache. 
+  Destroying cache.
   Return 0 in success, 1 if cache is NULL.
 */
 int DestroyCache(LRU_Cache_t* cache) {
@@ -126,16 +134,16 @@ int DestroyCache(LRU_Cache_t* cache) {
   }
 
   pthread_mutex_lock(&cache->lock);
-  cache_entry_t *cur = cache->head;
+  cache_entry_t* cur = cache->head;
   while (cur) {
-    cache_entry_t *n = cur->next;
+    cache_entry_t* n = cur->next;
     free(cur->key);
     free(cur->value);
     free(cur);
     cur = n;
   }
   free(cache->table);
-  
+
   cache->table = NULL;
   cache->head = cache->tail = NULL;
   cache->size = 0;
@@ -151,20 +159,23 @@ int DestroyCache(LRU_Cache_t* cache) {
 /*
 
 */
-int AddElem(LRU_Cache_t* cache, const char* key, const char* value, const size_t size) {
-  if (!cache || !key || (!value && size>0)) return EXIT_FAILURE;
+int AddElem(LRU_Cache_t* cache, const char* key, const char* value,
+            const size_t size) {
+  if (!cache || !key || (!value && size > 0))
+    return EXIT_FAILURE;
 
   pthread_mutex_lock(&cache->lock);
 
-  unsigned long h = hash_str(key) % cache->buckets;
-  cache_entry_t *cur = cache->table[h];
+  unsigned long  h = hash_str(key) % cache->buckets;
+  cache_entry_t* cur = cache->table[h];
   while (cur) {
     if (strcmp(cur->key, key) == 0) {
       assert(cache->size >= cur->size);
       cache->size -= cur->size;
 
-      // here need to refactor, now firstly copy full response to cache, when unlock mutex
-      char *newval = NULL;
+      // here need to refactor, now firstly copy full response to cache, when
+      // unlock mutex
+      char* newval = NULL;
       if (size > 0) {
         newval = malloc(size);
         if (!newval) {
@@ -183,7 +194,7 @@ int AddElem(LRU_Cache_t* cache, const char* key, const char* value, const size_t
       insert_at_front(cache, cur);
 
       while (cache->capacity > 0 && cache->size > cache->capacity) {
-          evict_tail(cache);
+        evict_tail(cache);
       }
 
       pthread_mutex_unlock(&cache->lock);
@@ -192,7 +203,7 @@ int AddElem(LRU_Cache_t* cache, const char* key, const char* value, const size_t
     cur = cur->hnext;
   }
 
-  cache_entry_t *node = malloc(sizeof(cache_entry_t));
+  cache_entry_t* node = malloc(sizeof(cache_entry_t));
   if (!node) {
     pthread_mutex_unlock(&cache->lock);
     return EXIT_FAILURE;
@@ -205,11 +216,17 @@ int AddElem(LRU_Cache_t* cache, const char* key, const char* value, const size_t
     return EXIT_FAILURE;
   }
 
-  // here need to refactor, now firstly copy full response to cache, when unlock mutex
+  // here need to refactor, now firstly copy full response to cache, when unlock
+  // mutex
   node->value = NULL;
   if (size > 0) {
     node->value = malloc(size);
-    if (!node->value) { free(node->key); free(node); pthread_mutex_unlock(&cache->lock); return -1; }
+    if (!node->value) {
+      free(node->key);
+      free(node);
+      pthread_mutex_unlock(&cache->lock);
+      return -1;
+    }
     memcpy(node->value, value, size);
   }
   node->size = size;
@@ -243,15 +260,15 @@ cache_entry_t* FindElem(LRU_Cache_t* cache, const char* key) {
   }
   pthread_mutex_lock(&cache->lock);
 
-  unsigned long h = hash_str(key) % cache->buckets;
-  cache_entry_t *cur = cache->table[h];
+  unsigned long  h = hash_str(key) % cache->buckets;
+  cache_entry_t* cur = cache->table[h];
 
   while (cur) {
     if (strcmp(cur->key, key) == 0) {
       detach_node(cache, cur);
       insert_at_front(cache, cur);
-      
-      cache_entry_t *ret = malloc(sizeof(cache_entry_t));
+
+      cache_entry_t* ret = malloc(sizeof(cache_entry_t));
       if (!ret) {
         pthread_mutex_unlock(&cache->lock);
         return NULL;
@@ -272,7 +289,7 @@ cache_entry_t* FindElem(LRU_Cache_t* cache, const char* key) {
         ret->value = NULL;
       }
       ret->prev = ret->next = ret->hnext = NULL;
-      
+
       pthread_mutex_unlock(&cache->lock);
       return ret;
     }

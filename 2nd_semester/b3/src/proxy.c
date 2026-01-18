@@ -8,9 +8,7 @@
   Loader thread, starts at handle_connection.
   Load to cache or response to client from cache.
 */
-static void loader_thread(void) {
-
-}
+static void loader_thread(void) {}
 
 
 /*
@@ -18,9 +16,7 @@ static void loader_thread(void) {
   to cache, if response is missing in cache.
   Fetch from cache response and send to client.
 */
-static void handle_connection(void) {
-
-}
+static void handle_connection(void) {}
 
 /*-------------------API-------------------*/
 
@@ -28,28 +24,16 @@ static void handle_connection(void) {
   Initialize proxy struct and create cache
   (interface to use stored cache exists, but not implemented).
 */
-int Proxy(ProxyServer* serv, ProxyConfig* cfg) {
-
-
-  return EXIT_SUCCESS;
-}
+int Proxy(ProxyServer* serv, ProxyConfig* cfg) { return EXIT_SUCCESS; }
 
 
 /*
   Main endless proxy loop, gracefully shutdown when handle SIGINT.
 */
-int Serve(ProxyServer* serv) {
-
-
-  return EXIT_SUCCESS;
-}
+int Serve(ProxyServer* serv) { return EXIT_SUCCESS; }
 
 
 /*
   Gracefully shutdown all connections.
 */
-int Shutdown(ProxyServer* serv) {
-  
-
-  return EXIT_SUCCESS;
-}
+int Shutdown(ProxyServer* serv) { return EXIT_SUCCESS; }
