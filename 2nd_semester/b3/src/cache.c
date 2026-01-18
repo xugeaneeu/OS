@@ -1,6 +1,7 @@
 #include "cache.h"
 
 #include <assert.h>
+#include <stdatomic.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,7 +14,8 @@
 */
 static unsigned long hash_str(const char* str) {
   unsigned long hash = 5381;
-  int           c;
+
+  int c;
   while ((c = (unsigned char)*str++))
     hash = ((hash << 5) + hash) + c;
   return hash;
@@ -46,7 +48,7 @@ static void detach_node(LRU_Cache_t* cache, cache_entry_t* node) {
 /*
   Push node to cahce double-linked list.
 */
-static void insert_at_front(LRU_Cache_t* cache, cache_entry_t* node) {
+static void insert_front(LRU_Cache_t* cache, cache_entry_t* node) {
   node->prev = NULL;
   node->next = cache->head;
   if (cache->head)
@@ -58,39 +60,49 @@ static void insert_at_front(LRU_Cache_t* cache, cache_entry_t* node) {
 
 
 /*
-  Pop node from tail.
+  Pop node (complete = 1) from tail.
 */
-static void evict_tail(LRU_Cache_t* cache) {
-  if (!cache->tail)
+static void evict_tail(LRU_Cache_t* c) {
+  // удаление из таблицы и LRU
+  pthread_mutex_lock(&c->lock);
+  cache_entry_t* e = c->tail;
+  while (e && !atomic_load(&e->complete))
+    e = e->prev;
+  if (!e) {
+    pthread_mutex_unlock(&c->lock);
     return;
-  cache_entry_t* node = cache->tail;
+  }
 
-  unsigned long  h = hash_str(node->key) % cache->buckets;
-  cache_entry_t* cur = cache->table[h];
+  unsigned long  h = hash_str(e->key) % c->buckets;
+  cache_entry_t* cur = c->table[h];
   cache_entry_t* prev = NULL;
   while (cur) {
-    if (cur == node) {
+    if (cur == e) {
       if (prev)
         prev->hnext = cur->hnext;
       else
-        cache->table[h] = cur->hnext;
+        c->table[h] = cur->hnext;
       break;
     }
     prev = cur;
     cur = cur->hnext;
   }
 
-  detach_node(cache, node);
+  detach_node(c, e);
+  pthread_mutex_unlock(&c->lock);
 
-  if (cache->size >= node->size)
-    cache->size -= node->size;
-  else
-    cache->size = 0;
+  pthread_mutex_lock(&e->lock);
+  pthread_mutex_unlock(&e->lock);
 
-  free(node->key);
-  free(node->value);
-  free(node);
+  atomic_fetch_sub(&c->size, e->size);
+
+  pthread_mutex_destroy(&e->lock);
+  pthread_cond_destroy(&e->cond);
+  free(e->value);
+  free(e->key);
+  free(e);
 }
+
 
 
 /*-------------------API-------------------*/
@@ -101,12 +113,12 @@ static void evict_tail(LRU_Cache_t* cache) {
   memory allocation error occured.
 */
 int Cache(LRU_Cache_t* cache, size_t capacity, size_t buckets) {
-  if (!cache || capacity == 0 || buckets == 0) {
+  if (!cache || buckets == 0) {
     return EXIT_FAILURE;
   }
 
   cache->capacity = capacity;
-  cache->size = 0;
+  atomic_store(&cache->size, 0);
 
   cache->head = cache->tail = NULL;
 
@@ -120,6 +132,7 @@ int Cache(LRU_Cache_t* cache, size_t capacity, size_t buckets) {
     free(cache->table);
     return EXIT_FAILURE;
   }
+
   return EXIT_SUCCESS;
 }
 
@@ -137,6 +150,8 @@ int DestroyCache(LRU_Cache_t* cache) {
   cache_entry_t* cur = cache->head;
   while (cur) {
     cache_entry_t* n = cur->next;
+    pthread_mutex_destroy(&cur->lock);
+    pthread_cond_destroy(&cur->cond);
     free(cur->key);
     free(cur->value);
     free(cur);
@@ -146,156 +161,112 @@ int DestroyCache(LRU_Cache_t* cache) {
 
   cache->table = NULL;
   cache->head = cache->tail = NULL;
-  cache->size = 0;
-  cache->capacity = 0;
 
   pthread_mutex_unlock(&cache->lock);
-
   pthread_mutex_destroy(&cache->lock);
+
   return EXIT_SUCCESS;
 }
 
 
 /*
-
+  Search in cache by key.
+  Return cache_entry_t* and created flag (0 if found in cache, 1 otherwise),
+  NULL if error occured.
 */
-int AddElem(LRU_Cache_t* cache, const char* key, const char* value,
-            const size_t size) {
-  if (!cache || !key || (!value && size > 0))
-    return EXIT_FAILURE;
+cache_entry_t* CacheGetOrCreate(LRU_Cache_t* cache, const char* key,
+                                int* created) {
+  unsigned long h = hash_str(key) % cache->buckets;
 
   pthread_mutex_lock(&cache->lock);
 
-  unsigned long  h = hash_str(key) % cache->buckets;
+  // search in hash table
   cache_entry_t* cur = cache->table[h];
   while (cur) {
     if (strcmp(cur->key, key) == 0) {
-      assert(cache->size >= cur->size);
-      cache->size -= cur->size;
-
-      // here need to refactor, now firstly copy full response to cache, when
-      // unlock mutex
-      char* newval = NULL;
-      if (size > 0) {
-        newval = malloc(size);
-        if (!newval) {
-          cache->size += cur->size;
-          pthread_mutex_unlock(&cache->lock);
-          return EXIT_FAILURE;
-        }
-        memcpy(newval, value, size);
+      if (atomic_load(&cur->complete)) {
+        detach_node(cache, cur);
+        insert_front(cache, cur);
       }
-      free(cur->value);
-      cur->value = newval;
-      cur->size = size;
-      cache->size += size;
-
-      detach_node(cache, cur);
-      insert_at_front(cache, cur);
-
-      while (cache->capacity > 0 && cache->size > cache->capacity) {
-        evict_tail(cache);
-      }
-
+      *created = 0;
       pthread_mutex_unlock(&cache->lock);
-      return EXIT_SUCCESS;
+      return cur;
     }
     cur = cur->hnext;
   }
 
-  cache_entry_t* node = malloc(sizeof(cache_entry_t));
-  if (!node) {
+  // not found, create new
+  cache_entry_t* e = malloc(sizeof(cache_entry_t));
+  if (!e) {
     pthread_mutex_unlock(&cache->lock);
-    return EXIT_FAILURE;
-  }
-
-  node->key = strdup(key);
-  if (!node->key) {
-    free(node);
-    pthread_mutex_unlock(&cache->lock);
-    return EXIT_FAILURE;
-  }
-
-  // here need to refactor, now firstly copy full response to cache, when unlock
-  // mutex
-  node->value = NULL;
-  if (size > 0) {
-    node->value = malloc(size);
-    if (!node->value) {
-      free(node->key);
-      free(node);
-      pthread_mutex_unlock(&cache->lock);
-      return -1;
-    }
-    memcpy(node->value, value, size);
-  }
-  node->size = size;
-  node->prev = node->next = NULL;
-  node->hnext = NULL;
-
-  node->hnext = cache->table[h];
-  cache->table[h] = node;
-
-  insert_at_front(cache, node);
-
-  cache->size += size;
-
-  while (cache->capacity > 0 && cache->size > cache->capacity) {
-    evict_tail(cache);
-  }
-
-  pthread_mutex_unlock(&cache->lock);
-  return EXIT_SUCCESS;
-}
-
-
-/*
-  Find value by provided key.
-  Return copy of finded value if success, NULL if cache/key is NULL /
-  memory allocation error occured.
-*/
-cache_entry_t* FindElem(LRU_Cache_t* cache, const char* key) {
-  if (!cache || !key) {
     return NULL;
   }
-  pthread_mutex_lock(&cache->lock);
 
-  unsigned long  h = hash_str(key) % cache->buckets;
-  cache_entry_t* cur = cache->table[h];
+  e->key = strdup(key);
+  e->value = NULL;
+  e->size = e->capacity = 0;
+  atomic_store(&e->complete, 0);
+  pthread_mutex_init(&e->lock, NULL);
+  pthread_cond_init(&e->cond, NULL);
+  e->hnext = cache->table[h];
+  cache->table[h] = e;
+  insert_front(cache, e);
 
-  while (cur) {
-    if (strcmp(cur->key, key) == 0) {
-      detach_node(cache, cur);
-      insert_at_front(cache, cur);
-
-      cache_entry_t* ret = malloc(sizeof(cache_entry_t));
-      if (!ret) {
-        pthread_mutex_unlock(&cache->lock);
-        return NULL;
-      }
-
-      ret->key = strdup(cur->key);
-      ret->size = cur->size;
-      if (cur->size > 0) {
-        ret->value = malloc(cur->size);
-        if (!ret->value) {
-          free(ret->key);
-          free(ret);
-          pthread_mutex_unlock(&cache->lock);
-          return NULL;
-        }
-        memcpy(ret->value, cur->value, cur->size);
-      } else {
-        ret->value = NULL;
-      }
-      ret->prev = ret->next = ret->hnext = NULL;
-
-      pthread_mutex_unlock(&cache->lock);
-      return ret;
-    }
-
-    cur = cur->hnext;
-  }
+  *created = 1;
   pthread_mutex_unlock(&cache->lock);
-  return NULL;
+  return e;
+}
+
+
+/*
+  Append data from buf to entry value, realloc value if needed.
+  Return 0 in success, 1 if entry/buf/len invalid or realloc was not success.
+*/
+int CacheAppend(cache_entry_t* entry, const char* buf, size_t len) {
+  if (!entry || !buf || len == 0)
+    return EXIT_FAILURE;
+
+  pthread_mutex_lock(&entry->lock);
+  /* realloc if needed */
+  if (entry->size + len > entry->capacity) {
+    size_t nc = entry->capacity == 0 ? len * 2 : entry->capacity * 2;
+    while (nc < entry->size + len)
+      nc *= 2;
+    char* p = realloc(entry->value, nc);
+    if (!p) {
+      pthread_mutex_unlock(&entry->lock);
+      return EXIT_FAILURE;
+    }
+    entry->value = p;
+    entry->capacity = nc;
+  }
+
+  memcpy(entry->value + entry->size, buf, len);
+  entry->size += len;
+
+  pthread_cond_broadcast(&entry->cond);
+  pthread_mutex_unlock(&entry->lock);
+
+  return EXIT_SUCCESS;
+}
+
+
+/*
+  Mark entry complete and start eviction mechanism.
+  Return -1 if cache or entry invalid, else 0.
+*/
+int CacheFinish(LRU_Cache_t* cache, cache_entry_t* entry) {
+  if (!cache || !entry)
+    return -1;
+
+  pthread_mutex_lock(&entry->lock);
+  atomic_store(&entry->complete, 1);
+  pthread_cond_broadcast(&entry->cond);
+  pthread_mutex_unlock(&entry->lock);
+
+  atomic_fetch_add(&cache->size, entry->size);
+  while (atomic_load(&cache->size) > cache->capacity) {
+    evict_tail(cache);
+  }
+  return 0;
 }

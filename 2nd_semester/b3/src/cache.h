@@ -24,8 +24,8 @@ typedef struct cache_entry_t {
 
 
 typedef struct LRU_Cache_t {
-  size_t capacity;
-  size_t size;
+  size_t        capacity;
+  atomic_size_t size;
 
   cache_entry_t* head;
   cache_entry_t* tail;
@@ -41,4 +41,7 @@ typedef struct LRU_Cache_t {
 
 int            Cache(LRU_Cache_t* cache, size_t capacity, size_t buckets);
 int            DestroyCache(LRU_Cache_t* cache);
-cache_entry_t* CacheGetOrCreate();
+cache_entry_t* CacheGetOrCreate(LRU_Cache_t* cache, const char* key,
+                                int* created);
+int            CacheAppend(cache_entry_t* entry, const char* buf, size_t len);
+int            CacheFinish(LRU_Cache_t* cache, cache_entry_t* entry);
