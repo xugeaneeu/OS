@@ -8,3 +8,5 @@ MAX_CONNECTIONS 1000
 Компиляция: make all
 
 Запуск: sudo ./build/proxy
+
+Запуск тестов: sudo make run-tests
