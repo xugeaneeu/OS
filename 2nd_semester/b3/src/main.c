@@ -1,4 +1,3 @@
-#include "config.h"
 #include "proxy.h"
 
 #include <stddef.h>
@@ -7,22 +6,20 @@
 
 
 int main(void) {
-  ProxyConfig cfg;
+  ProxyConfig cfg = ProxyConfigDefault();
   ProxyServer serv;
 
-  cfg.port = PORT;
-  cfg.cache = NULL;
-  cfg.cacheless = 0;
-
-  if (Proxy(&serv, &cfg)) {
+  if (InitProxy(&serv, &cfg)) {
     fprintf(stderr, "error when creating server");
     return EXIT_FAILURE;
   }
 
-  if (Serve(&serv)) {
-    fprintf(stderr, "error when trying to open listening socket");
+  if (InitServerAndServe(&serv)) {
+    Shutdown(&serv);
     return EXIT_FAILURE;
   }
+
+  Shutdown(&serv);
 
   return EXIT_SUCCESS;
 }

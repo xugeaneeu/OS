@@ -39,7 +39,7 @@ typedef struct LRU_Cache_t {
 
 /*-------------API--------------*/
 
-int            Cache(LRU_Cache_t* cache, size_t capacity, size_t buckets);
+int            CreateCache(LRU_Cache_t* cache, size_t capacity, size_t buckets);
 int            DestroyCache(LRU_Cache_t* cache);
 cache_entry_t* CacheGetOrCreate(LRU_Cache_t* cache, const char* key,
                                 int* created);

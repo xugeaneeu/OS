@@ -2,7 +2,9 @@
 
 #include "cache.h"
 #include "config.h"
+#include "net.h"
 
+#include <semaphore.h>
 #include <stdatomic.h>
 #include <stdint.h>
 
@@ -21,9 +23,10 @@ typedef struct Connection {
 
 typedef struct ProxyServer {
   LRU_Cache_t* cache;
-  int          listener;
+  NetListener* listener;
   atomic_int   conn_cnt;
   Connection   connections[MAX_CONNECTIONS];
+  sem_t        slot_sem;
 } ProxyServer;
 
 typedef struct ProxyConfig {
@@ -36,6 +39,7 @@ typedef struct ProxyConfig {
 
 /*-------------API--------------*/
 
-int Proxy(ProxyServer* serv, ProxyConfig* cfg);
-int Serve(ProxyServer* serv);
-int Shutdown(ProxyServer* serv);
+int         InitProxy(ProxyServer* serv, ProxyConfig* cfg);
+int         InitServerAndServe(ProxyServer* serv);
+int         Shutdown(ProxyServer* serv);
+ProxyConfig ProxyConfigDefault(void);

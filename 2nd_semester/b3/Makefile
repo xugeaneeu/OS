@@ -5,7 +5,7 @@ CC      := clang
 CFLAGS     := -pthread
 BUILD_DIR  := build
 
-SRCS    := src/main.c src/proxy.c src/cache.c
+SRCS    := src/main.c src/proxy.c src/cache.c src/HTTPParser.c src/net.c
 OBJS    := $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(SRCS))
 TARGET  := $(BUILD_DIR)/proxy
 

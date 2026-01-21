@@ -91,9 +91,6 @@ static void evict_tail(LRU_Cache_t* c) {
   detach_node(c, e);
   pthread_mutex_unlock(&c->lock);
 
-  pthread_mutex_lock(&e->lock);
-  pthread_mutex_unlock(&e->lock);
-
   atomic_fetch_sub(&c->size, e->size);
 
   pthread_mutex_destroy(&e->lock);
@@ -112,7 +109,7 @@ static void evict_tail(LRU_Cache_t* c) {
   Return 0 in success, 1 if cache is NULL / capasity is 0 /
   memory allocation error occured.
 */
-int Cache(LRU_Cache_t* cache, size_t capacity, size_t buckets) {
+int CreateCache(LRU_Cache_t* cache, size_t capacity, size_t buckets) {
   if (!cache || buckets == 0) {
     return EXIT_FAILURE;
   }
@@ -142,10 +139,6 @@ int Cache(LRU_Cache_t* cache, size_t capacity, size_t buckets) {
   Return 0 in success, 1 if cache is NULL.
 */
 int DestroyCache(LRU_Cache_t* cache) {
-  if (!cache) {
-    return EXIT_FAILURE;
-  }
-
   pthread_mutex_lock(&cache->lock);
   cache_entry_t* cur = cache->head;
   while (cur) {
