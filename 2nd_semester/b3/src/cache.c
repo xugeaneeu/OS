@@ -8,20 +8,6 @@
 #include <string.h>
 
 
-#include <pthread.h>
-#include <stdarg.h>
-#include <stdio.h>
-
-static void dbg_log(const char* fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  fprintf(stderr, "[%8lu] ", (unsigned long)pthread_self());
-  vfprintf(stderr, fmt, ap);
-  fprintf(stderr, "\n");
-  va_end(ap);
-}
-
-
 /*------------place for statics------------*/
 
 /*
