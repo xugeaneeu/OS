@@ -10,7 +10,7 @@
 /*------------place for statics------------*/
 
 /*
-  Simple hash to str function.
+  Simple str to hash function.
 */
 static unsigned long hash_str(const char* str) {
   unsigned long hash = 5381;

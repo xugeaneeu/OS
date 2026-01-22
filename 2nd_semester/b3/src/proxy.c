@@ -312,7 +312,7 @@ int InitProxy(ProxyServer* serv, ProxyConfig* cfg) {
     if (!serv->cache)
       return -1;
 
-    if (CreateCache(serv->cache, LRU_CACHE_CAP, LRU_CACHE_BUCKETS) != 0) {
+    if (CreateCache(serv->cache, LRU_CACHE_EVICT_NUM, LRU_CACHE_BUCKETS)) {
       free(serv->cache);
       return -1;
     }
