@@ -8,6 +8,7 @@
 #include <netdb.h>
 #include <signal.h>
 #include <stdatomic.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -197,32 +198,47 @@ static cache_entry_t* get_or_create_entry(ProxyServer* serv, const char* key,
 */
 static void stream_entry_to_fd(int fd, cache_entry_t* e) {
   size_t offset = 0;
+
+  atomic_fetch_add(&e->refcount, 1);
+
   for (;;) {
-    pthread_mutex_lock(&e->lock);
+    pthread_mutex_lock(&e->cond_mutex);
     while (offset == e->size && !atomic_load(&e->complete)) {
-      pthread_cond_wait(&e->cond, &e->lock);
+      pthread_cond_wait(&e->cond, &e->cond_mutex);
     }
-    size_t new_bytes = e->size - offset;
-    int    done = atomic_load(&e->complete) && new_bytes == 0;
-    pthread_mutex_unlock(&e->lock);
+    pthread_mutex_unlock(&e->cond_mutex);
 
-    if (done)
-      break;
+    pthread_rwlock_rdlock(&e->rwlock);
+    size_t cur_size = e->size;
+    bool   done = atomic_load(&e->complete) && (offset == cur_size);
+    pthread_rwlock_unlock(&e->rwlock);
 
-    if (new_bytes > 0) {
-      char*  p = e->value + offset;
-      size_t tosend = new_bytes;
+    if (offset < cur_size) {
+      size_t      tosend = cur_size - offset;
+      const char* p = e->value + offset;
       while (tosend) {
         ssize_t w = send(fd, p, tosend, 0);
-        if (w <= 0)
-          return;
+        if (w <= 0) {
+          goto finish;
+        }
         p += w;
         tosend -= w;
       }
-      offset += new_bytes;
+      offset = cur_size;
+      continue;
+    }
+
+    if (done) {
+      break;
     }
   }
+
+finish:
+  if (atomic_fetch_sub(&e->refcount, 1) == 1 && atomic_load(&e->deleted)) {
+    Destroy_entry(e);
+  }
 }
+
 
 /*
   Run loader thread to fetch response from dest server

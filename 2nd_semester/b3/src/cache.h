@@ -13,8 +13,13 @@ typedef struct cache_entry_t {
   size_t capacity; // complete size
 
   atomic_int      complete; // 0 - downloading, 1 - complete
-  pthread_mutex_t lock;
+  pthread_mutex_t cond_mutex;
   pthread_cond_t  cond;
+
+  pthread_rwlock_t rwlock;
+
+  atomic_uint refcount;
+  atomic_bool deleted;
 
   struct cache_entry_t* prev;
   struct cache_entry_t* next;
@@ -33,7 +38,8 @@ typedef struct LRU_Cache_t {
   size_t          buckets;
   cache_entry_t** table;
 
-  pthread_mutex_t lock;
+  pthread_mutex_t* bucket_locks; /* array of buckets mutexes */
+  pthread_mutex_t  list_lock;    /* protects the doubly-linked LRU list */
 } LRU_Cache_t;
 
 
@@ -45,3 +51,4 @@ cache_entry_t* CacheGetOrCreate(LRU_Cache_t* cache, const char* key,
                                 int* created);
 int            CacheAppend(cache_entry_t* entry, const char* buf, size_t len);
 int            CacheFinish(LRU_Cache_t* cache, cache_entry_t* entry);
+void           Destroy_entry(cache_entry_t* e);
